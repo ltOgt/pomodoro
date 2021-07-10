@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:pomodoro/background/star/star_painter_widget.dart';
 
 void main() {
   runApp(
@@ -126,7 +127,7 @@ class _PomodoroTimerWidgetState extends State<PomodoroTimerWidget> {
         alignment: AlignmentDirectional.center,
         children: [
           if (!isStopped) ...[
-            StarPainterPainter(duration: duration),
+            StartPainterWidget(duration: duration),
           ],
           isStopped
               // Show input if no duration has been set (or has been reset via STOP)
@@ -205,137 +206,4 @@ class _PomodoroTimerWidgetState extends State<PomodoroTimerWidget> {
       ),
     );
   }
-}
-
-class StarPainterPainter extends StatefulWidget {
-  const StarPainterPainter({
-    Key? key,
-    required this.duration,
-  }) : super(key: key);
-
-  final Duration? duration;
-
-  @override
-  State<StarPainterPainter> createState() => _StarPainterPainterState();
-}
-
-class _StarPainterPainterState extends State<StarPainterPainter> {
-  List<Star> stars = [];
-
-  Size previousSize = const Size(0, 0);
-
-  @override
-  void didChangeDependencies() {
-    final newSize = MediaQuery.of(context).size;
-    if (newSize != previousSize) {
-      previousSize = newSize;
-      stars = [];
-    }
-    super.didChangeDependencies();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      child: Container(
-        // show dart color if timer is running TODO animate outwards
-        constraints: const BoxConstraints.expand(
-          height: double.infinity,
-          width: double.infinity,
-        ),
-      ),
-      painter: StartPainter(
-        maxRadius: 1.5,
-        stars: stars,
-        numberOfStars: ((previousSize.width * previousSize.height) / 500).round(),
-        movement: const Offset(0.01, 0.02),
-      ),
-    );
-  }
-}
-
-class Star {
-  Offset position;
-  double width;
-  double brightness;
-
-  Offset movementAdjust;
-  Star({
-    required this.position,
-    required this.width,
-    required this.brightness,
-    required this.movementAdjust,
-  });
-}
-
-class StartPainter extends CustomPainter {
-  final int numberOfStars;
-  final double maxRadius;
-  final List<Star> stars;
-  final random = Random();
-  final Offset movement;
-  Paint starPaint = Paint();
-
-  StartPainter({
-    required this.numberOfStars,
-    required this.maxRadius,
-    required this.stars,
-    required this.movement,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (stars.isEmpty) {
-      for (int i = 0; i < numberOfStars; i++) {
-        stars.add(
-          Star(
-            position: Offset(
-              random.nextDouble() * size.width,
-              random.nextDouble() * size.height,
-            ),
-            width: random.nextDouble() * maxRadius,
-            brightness: random.nextDouble(),
-            movementAdjust: Offset(
-              random.nextDouble() * 0.02,
-              random.nextDouble() * 0.02,
-            ),
-          ),
-        );
-      }
-    }
-    for (final star in stars) {
-      Offset newPosition = star.position + movement + star.movementAdjust;
-      double x = newPosition.dx;
-      double y = newPosition.dy;
-
-      // wrap around at edges
-      if (x > size.width) {
-        x = 0;
-      } else if (x < 0) {
-        x = size.width;
-      }
-      if (y > size.height) {
-        y = 0;
-      } else if (y < 0) {
-        y = size.height;
-      }
-
-      star.position = Offset(x, y);
-
-      canvas.drawCircle(
-        star.position,
-        star.width,
-        starPaint
-          ..color = Color.fromARGB(
-            (255 * star.brightness).round().clamp(0, 255),
-            255,
-            255,
-            255,
-          ),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(StartPainter oldDelegate) => true;
 }
