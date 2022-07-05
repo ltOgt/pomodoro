@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:pomodoro/background/star/star_painter_widget.dart';
 
+import 'package:ltogt_utils_flutter/ltogt_utils_flutter.dart';
+
 void main() {
   runApp(
     MaterialApp(
@@ -102,6 +104,32 @@ class _PomodoroTimerWidgetState extends State<PomodoroTimerWidget> {
     });
   }
 
+  String _pad(int v, int max) => NumHelper.paddedString(v, max);
+  String? get timeForClockText => timeForClock == null //
+      ? null
+      : (_pad(timeForClock!.hour, 24) + ":" + _pad(timeForClock!.minute, 59));
+  DateTime? timeForClock;
+  void _clockCallback() {
+    setState(() {
+      timeForClock = DateTime.now();
+    });
+  }
+
+  void startClock() {
+    _timer = Timer.periodic(
+      sixtyFPS,
+      (Timer timer) => _clockCallback(),
+    );
+  }
+
+  void stopClock() {
+    _timer?.cancel();
+    setState(() {
+      _timer = null;
+      timeForClock = null;
+    });
+  }
+
   static const darkColor = Color(0xFF111111);
   static const sizedBox = SizedBox(height: 18);
   static const sixtyFPS = Duration(milliseconds: 16);
@@ -122,19 +150,24 @@ class _PomodoroTimerWidgetState extends State<PomodoroTimerWidget> {
         height: double.infinity,
         width: double.infinity,
       ),
-      color: duration != null ? darkColor : null,
+      color: (duration != null || timeForClock != null) ? darkColor : null,
       child: Stack(
         alignment: AlignmentDirectional.center,
         children: [
-          if (!isStopped) ...[
-            StartPainterWidget(duration: duration),
+          if (!isStopped || timeForClock != null) ...[
+            StarPainterWidget(),
           ],
-          isStopped
+          isStopped && timeForClock == null
               // Show input if no duration has been set (or has been reset via STOP)
               ? Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    IconButton(
+                      onPressed: startClock,
+                      icon: const Icon(Icons.timelapse),
+                    ),
+                    ...times(3, sizedBox),
                     Container(
                       width: 100,
                       decoration: const BoxDecoration(
@@ -175,7 +208,7 @@ class _PomodoroTimerWidgetState extends State<PomodoroTimerWidget> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      durationText,
+                      timeForClockText ?? durationText,
                       style: fontStyle,
                     ),
                     sizedBox,
@@ -186,20 +219,25 @@ class _PomodoroTimerWidgetState extends State<PomodoroTimerWidget> {
                             icon: const Icon(Icons.pause),
                           )
                         // Allow to continue or stop timer if it is paused
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (duration!.inSeconds != 0)
-                                IconButton(
-                                  onPressed: startTimer,
-                                  icon: const Icon(Icons.play_arrow),
-                                ),
-                              IconButton(
-                                onPressed: stopTimer,
-                                icon: const Icon(Icons.stop),
+                        : timeForClock != null //
+                            ? IconButton(
+                                onPressed: stopClock,
+                                icon: const Icon(Icons.arrow_back),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (duration!.inSeconds != 0)
+                                    IconButton(
+                                      onPressed: startTimer,
+                                      icon: const Icon(Icons.play_arrow),
+                                    ),
+                                  IconButton(
+                                    onPressed: stopTimer,
+                                    icon: const Icon(Icons.stop),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
                   ],
                 ),
         ],

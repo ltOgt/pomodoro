@@ -4,19 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:pomodoro/background/star/star.dart';
 import 'package:pomodoro/background/star/star_painter.dart';
 
-class StartPainterWidget extends StatefulWidget {
-  const StartPainterWidget({
+class StarPainterWidget extends StatefulWidget {
+  const StarPainterWidget({
     Key? key,
-    required this.duration,
   }) : super(key: key);
 
-  final Duration? duration;
-
   @override
-  State<StartPainterWidget> createState() => _StartPainterWidgetState();
+  State<StarPainterWidget> createState() => _StarPainterWidgetState();
 }
 
-class _StartPainterWidgetState extends State<StartPainterWidget> {
+class _StarPainterWidgetState extends State<StarPainterWidget> {
   List<Star> stars = [];
 
   Size previousSize = const Size(0, 0);
